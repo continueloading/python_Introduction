@@ -374,6 +374,24 @@ print(scores)
 
  > 使用class关键字定义类，写在类中的函数，我们通常称之为（对象的）方法，这些方法就是对象可以接收的消息。虚拟对象的关键字为self。
 
+> ```Python
+> # 定义犬类
+> class Dog:
+> 	# 不创建任何属性和方法
+> 	pass
+> 
+> 
+> a = Dog
+> print(a)
+> 
+> b = Dog()
+> print(b)
+> ```
+> a = Dog实际上是将Dog 类赋值给了变量a，因此，a是一个类
+> 
+> b = Dog()实际上是为Dog 类创建了一个实例（对象），即b属于Dog 类，换句话说，b是一条狗。
+
+
 ```Python
 #	定义
 class Student(object):
@@ -655,3 +673,337 @@ def main():
 if __name__ == '__main__':
     main()
 ```
+
+#### 3.6.6类之间的关系
+类和类之间的关系有三种：is-a、has-a和use-a关系。
+
+>is-a关系也叫继承或泛化，比如学生和人的关系、手机和电子产品的关系都属于继承关系。
+>
+>has-a关系通常称之为关联，比如部门和员工的关系，汽车和引擎的关系都属于关联关系；关联关系如果是整体和部分的关联，那么我们称之为聚合关系；如果整体进一步负责了部分的生命周期（整体和部分是不可分割的，同时同在也同时消亡），那么这种就是最强的关联关系，我们称之为合成关系。
+>
+>use-a关系通常称之为依赖，比如司机有一个驾驶的行为（方法），其中（的参数）使用到了汽车，那么司机和汽车的关系就是依赖关系。
+
+##### 3.6.5.1 继承和多态
+可以在已有类的基础上创建新类，这其中的一种做法就是让一个类从另一个类那里将属性和方法直接继承下来，从而减少重复代码的编写。提供继承信息叫父类或超类、基类，得到基础信息的叫子类。子类就会基础父类的属性与方法，还可以有自己的属性与方法。在实际开发中，我们经常会用子类对象去替换掉一个父类对象，这是面向对象编程中一个常见的行为，对应的原则称之为里氏替换原则。
+
+>__Liskow Substitutioin Principle,LSP(里氏替换原则)__:所有使用基类的地方必须能透明地使用其子类的对象。也就是说只要父类能出现的地方子类就可以出现，而且替换为子类也不会出现任何错误或异常，但是反过来就不行了，有子类出现的地方，父类未必就能适应。李氏替换原则为继承定义了一个规范。在类中调用其他类时务必要使用父类或接口，如果不能使用父类或接口，则说明类的设计已经违背了LSP原则。
+
+> object是一个基类，或称之为元类。   
+> 在python2.x上，不继承object类的称之为经典类，继承了object类的称之为新式类
+
+
+```Python
+class Person(object):
+    """人"""
+
+    def __init__(self, name, age):
+        self._name = name
+        self._age = age
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def age(self):
+        return self._age
+
+    @age.setter
+    def age(self, age):
+        self._age = age
+
+    def play(self):
+        print('%s正在愉快的玩耍.' % self._name)
+
+    def watch_av(self):
+        if self._age >= 18:
+            print('%s正在观看爱情动作片.' % self._name)
+        else:
+            print('%s只能观看《熊出没》.' % self._name)
+
+
+class Student(Person):
+    """学生"""
+
+    def __init__(self, name, age, grade):
+        super().__init__(name, age)
+        self._grade = grade
+
+    @property
+    def grade(self):
+        return self._grade
+
+    @grade.setter
+    def grade(self, grade):
+        self._grade = grade
+
+    def study(self, course):
+        print('%s的%s正在学习%s.' % (self._grade, self._name, course))
+
+
+class Teacher(Person):
+    """老师"""
+
+    def __init__(self, name, age, title):
+        super().__init__(name, age)
+        self._title = title
+
+    @property
+    def title(self):
+        return self._title
+
+    @title.setter
+    def title(self, title):
+        self._title = title
+
+    def teach(self, course):
+        print('%s%s正在讲%s.' % (self._name, self._title, course))
+
+
+def main():
+    stu = Student('王大锤', 15, '初三')
+    stu.study('数学')
+    stu.watch_av()
+    t = Teacher('骆昊', 38, '老叫兽')
+    t.teach('Python程序设计')
+    t.watch_av()
+
+
+if __name__ == '__main__':
+    main()
+```
+子类在继承了父类的方法后，可以对父类已有的方法给出新的实现版本，这个动作称之为方法重写（override）。通过方法重写我们可以让父类的同一个行为在子类中拥有不同的实现版本，当我们调用这个经过子类重写的方法时，不同的子类对象会表现出不同的行为，这个就是多态（poly-morphism）。
+
+``` Python
+from abc import ABCMeta, abstractmethod
+
+
+class Pet(object, metaclass=ABCMeta):
+    """宠物"""
+
+    def __init__(self, nickname):
+        self._nickname = nickname
+
+    @abstractmethod
+    def make_voice(self):
+        """发出声音"""
+        pass
+
+
+class Dog(Pet):
+    """狗"""
+
+    def make_voice(self):
+        print('%s: 汪汪汪...' % self._nickname)
+
+
+class Cat(Pet):
+    """猫"""
+
+    def make_voice(self):
+        print('%s: 喵...喵...' % self._nickname)
+
+
+def main():
+    pets = [Dog('旺财'), Cat('凯蒂'), Dog('大黄')]
+    for pet in pets:
+        pet.make_voice()
+
+
+if __name__ == '__main__':
+    main()
+```
+在上面的代码中，我们将Pet类处理成了一个抽象类，所谓抽象类就是不能够创建对象的类，这种类的存在就是专门为了让其他类去继承它。Python从语法层面并没有像Java或C#那样提供对抽象类的支持，但是我们可以通过abc模块的ABCMeta元类和abstractmethod包装器来达到抽象类的效果，如果一个类中存在抽象方法那么这个类就不能够实例化（创建对象）。上面的代码中，Dog和Cat两个子类分别对Pet类中的make_voice抽象方法进行了重写并给出了不同的实现版本，当我们在main函数中调用该方法时，这个方法就表现出了多态行为（同样的方法做了不同的事情）。
+
+### 3.7 图形用户界面和游戏开发
+
+#### 3.7.1 基于tkinter模块的GUI
+GUI是图形用户界面的缩写。
+
+> global与nonlocal的区别
+> 
+> 第一，两者的功能不同。global关键字修饰变量后标识该变量是全局变量，对该变量进行修改就是修改全局变量，而nonlocal关键字修饰变量后标识该变量是上一级函数中的局部变量，如果上一级函数中不存在该局部变量，nonlocal位置会发生错误（最上层的函数使用nonlocal修饰变量必定会报错）。
+> 
+> 第二，两者使用的范围不同。global关键字可以用在任何地方，包括最上层函数中和嵌套函数中，即使之前未定义该变量，global修饰后也可以直接使用，而nonlocal关键字只能用于嵌套函数中，并且外层函数中定义了相应的局部变量，否则会发生错误（见第一）。
+```Python
+import tkinter
+import tkinter.messagebox
+
+
+def main():
+    flag = True
+
+    # 修改标签上的文字
+    def change_label_text():
+        nonlocal flag
+        flag = not flag
+        color, msg = ('red', 'Hello, world!')\
+            if flag else ('blue', 'Goodbye, world!')
+        label.config(text=msg, fg=color)
+
+    # 确认退出
+    def confirm_to_quit():
+        if tkinter.messagebox.askokcancel('温馨提示', '确定要退出吗?'):
+            top.quit()
+
+    # 创建顶层窗口
+    top = tkinter.Tk()
+    # 设置窗口大小
+    top.geometry('240x160')
+    # 设置窗口标题
+    top.title('小游戏')
+    # 创建标签对象并添加到顶层窗口
+    label = tkinter.Label(top, text='Hello, world!', font='Arial -32', fg='red')
+    label.pack(expand=1)
+    # 创建一个装按钮的容器
+    panel = tkinter.Frame(top)
+    # 创建按钮对象 指定添加到哪个容器中 通过command参数绑定事件回调函数
+    button1 = tkinter.Button(panel, text='修改', command=change_label_text)
+    button1.pack(side='left')
+    button2 = tkinter.Button(panel, text='退出', command=confirm_to_quit)
+    button2.pack(side='right')
+    panel.pack(side='bottom')
+    # 开启主事件循环
+    tkinter.mainloop()
+
+
+if __name__ == '__main__':
+    main()
+```
+
+#### 3.7.2 使用Pygame进行游戏开发
+Pygame是一个开源的Python模块，专门用于多媒体应用（如电子游戏）的开发，其中包含对图像、声音、视频、事件、碰撞等的支持。
+
+```Python
+import pygame
+
+
+def main():
+    # 初始化导入的pygame中的模块
+    pygame.init()
+    # 初始化用于显示的窗口并设置窗口尺寸
+    screen = pygame.display.set_mode((800, 600))
+    # 设置当前窗口的标题
+    pygame.display.set_caption('大球吃小球')
+    running = True
+    # 开启一个事件循环处理发生的事件
+    while running:
+        # 从消息队列中获取事件并对事件进行处理
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+
+if __name__ == '__main__':
+    main()
+```
+### 3.8 文件和异常
+通过Python内置的open函数，我们可以指定文件名、操作模式、编码信息等来获得操作文件的对象，接下来就可以对文件进行读写操作了。
+
+|操作模式|	具体含义|
+|:--------:|:------------:|
+|'r'|	读取 （默认）|
+|'w'|	写入（会先截断之前的内容）|
+|'x'|	写入，如果文件已经存在会产生异常|
+|'a'|	追加，将内容写入到已有文件的末尾|
+|'b'|	二进制模式|
+|'t'|	文本模式（默认）|
+|'+'|	更新（既可以读又可以写）|
+
+> 读取图片时使用的是二进制模式
+
+<center>
+<img src="https://raw.githubusercontent.com/jackfrued/Python-100-Days/master/Day01-15/res/file-open-mode.png"/>
+图3.4.1 根据需求选操作模式
+</center>
+
+#### 3.8.1 试错法读写文档
+
+```Python
+def main():
+    f = None
+    try:
+        f = open('致橡树.txt', 'r', encoding='utf-8')
+        print(f.read())
+    except FileNotFoundError:
+        print('无法打开指定的文件!')
+    except LookupError:
+        print('指定了未知的编码!')
+    except UnicodeDecodeError:
+        print('读取文件时解码错误!')
+    finally:
+        if f:
+            f.close()
+
+
+if __name__ == '__main__':
+    main()
+```
+
+> except后面的为错误信息，可以根据程序报错决定
+
+#### 3.8.2 读写JSON文件
+用于存放列表和字典
+
+JSON与Python的数据类型对比
+
+|JSON|	Python|
+|:--------:|:------------:|
+|object	|dict|
+|array	|list|
+|string	|str|
+|number (int / real)|	int / float|
+|true / false	|True / False|
+|null	|None|
+
+|Python	|JSON|
+|:--------:|:------------:|
+|dict	|object|
+|list, tuple|	array|
+|str	|string|
+|int, float, int- & float-derived Enums|	number
+|True / False	|true / false|
+|None	|null|
+
+```Python
+import json
+
+
+def main():
+    mydict = {
+        'name': '骆昊',
+        'age': 38,
+        'qq': 957658,
+        'friends': ['王大锤', '白元芳'],
+        'cars': [
+            {'brand': 'BYD', 'max_speed': 180},
+            {'brand': 'Audi', 'max_speed': 280},
+            {'brand': 'Benz', 'max_speed': 320}
+        ]
+    }
+    try:
+        with open('data.json', 'w', encoding='utf-8') as fs:
+            json.dump(mydict, fs)
+    except IOError as e:
+        print(e)
+    print('保存数据完成!')
+
+
+if __name__ == '__main__':
+    main()
+```
+
+> json模块主要有四个比较重要的函数，分别是：
+> 
+> + dump - 将Python对象按照JSON格式序列化到文件中
+> + dumps - 将Python对象处理成JSON格式的字符串
+> + load - 将文件中的JSON数据反序列化成对象
+> + loads - 将字符串的内容反序列化成Python对象
+
+> __序列化（serialization）__:在计算机科学的数据处理中，是指将数据结构或对象状态转换为可以存储或传输的形式，这样在需要的时候能够恢复到原先的状态，而且通过序列化的数据重新获取字节时，可以利用这些字节来产生原始对象的副本（拷贝）。与这个过程相反的动作，即从一系列字节中提取数据结构的操作，就是反序列化（deserialization）”。
+> 
+> 对象的序列化主要有两种用途：
+> 
+> 1） 把对象的字节序列永久地保存到硬盘上，通常存放在一个文件中；
+> 
+> 2） 在网络上传送对象的字节序列。
